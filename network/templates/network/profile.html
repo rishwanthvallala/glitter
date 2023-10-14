@@ -1,0 +1,142 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+
+    <div class="ml-3">
+
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h1>
+                        {% if curuser.username == user.username %}
+                            Your
+                        {% else %}
+                            {{ curuser.username }}'s
+                        {% endif %}
+                        Profile
+                    </h1>
+                </div>
+                <div class="col-md-4">
+                    <h3>{{ posts.count }} posts </h3>
+                </div>
+                <div class="col-md-4">
+                    <h3>{{ followers }} followers </h3>
+                </div>
+                <div class="col-md-4">
+                    <h3> {{ following }} following</h3>
+                </div>
+                
+                <div class="col-md-12">
+                    {% if curuser.username != user.username and user.is_authenticated %}
+                        {% if not followingstatus %}
+                            <form action="{% url 'follow' curuser.username %}" method="post">
+                                {% csrf_token %}
+                                <input type="submit" value="Follow" class="btn btn-primary">
+                            </form>
+                        {% else %}
+                            <form action="{% url 'unfollow' curuser.username %}" method="post">
+                                {% csrf_token %}
+                                <input type="submit" value="Unfollow" class="btn btn-danger">
+                            </form>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h1>
+                        {% if curuser.username == user.username %}
+                            Your
+                        {% else %}
+                            {{ curuser.username }}'s
+                        {% endif %}
+                            Posts
+                    </h1>
+                </div>
+            </div>
+            
+
+        <div class="container">
+            {% if page_obj %}
+                {% for post in page_obj %}
+                    <div id="post_{{ post.id }}" class="row justify-content-center">
+                        <div class="col-md-7">
+                            <div class="col-12">
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div>
+                                            <a href="{% url 'profile' post.user.username %}"><h5 class="card-title d-inline">{{ post.user.username }}</h5></a>
+                                            <h6 class="card-subtitle mb-2 text-muted d-inline ml-auto">{{ post.timestamp }}</h6>
+                                        </div>
+                                        <p class="card-text" id="paracontent_{{ post.id }}">{{ post.content }}</p>
+
+                                        <div class="card-text d-inline" id="like_{{ post.id }}" >{{ post.likes }}</div>
+                                        <a  class="card-link"   onclick="likePost({{post.id}} )" id="likePosticon_{{ post.id }}">
+                                            {% if user in post.likers.all %}
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-heart-fill" viewBox="0 0 16 16">
+                                                    <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
+                                                </svg>
+                                            {% else %}
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-heart" viewBox="0 0 16 16">
+                                                    <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z"/>
+                                                </svg>
+                                            {% endif %}
+                                        </a>                  
+                                        {% if user.is_authenticated and user.username == post.user.username %}
+                                            <button type="button"  class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal{{post.id}}" id = "editPost"> 
+                                                Edit
+                                            </button> 
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="modal fade" id="exampleModal{{post.id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h1 class="modal-title fs-5" id="exampleModalLabel">Edit post for {{post.id}}</h1>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <textarea class="form-control" id="content_{{ post.id }}" rows="3"> {{ post.content }} </textarea>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                <button type="button" class="btn btn-primary"data-bs-dismiss="modal" id="savePost" onclick="Post({{post.id}} )">Save changes</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class=" danger" role="alert">
+                    <h4 class="alert-heading">No posts found!</h4>
+                </div>
+            {% endif %}
+        </div>
+
+
+
+        <nav aria-label="Page navigation example">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}  
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% endif %}
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+{% endblock %}
