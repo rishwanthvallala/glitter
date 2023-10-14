@@ -1,7 +1,7 @@
 
 # Your Django Project Name
 
-This is a Django web application that allows users to share posts, follow other users, and like posts.
+This is a Django web application that allows users to share posts, follow other users, and like posts. Hosted [here](https://rishwanthvallala.pythonanywhere.com/)
 
 ## Table of Contents
 
